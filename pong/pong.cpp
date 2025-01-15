@@ -41,7 +41,8 @@ void ShowConsoleCursor(bool showFlag) //функция убирает мигающий курсор консоли
     cursorInfo.bVisible = showFlag;//изменяем ее
     SetConsoleCursorInfo(out, &cursorInfo);//сохраняем
 }
-
+//sss
+//sss
 void InitGame()
 {
     //в этой секции загружаем спрайты с помощью функций gdi
