@@ -161,14 +161,14 @@ void ShowRacketAndBall()
     ShowBitmap(window.context, ball.x - ball.rad, ball.y - ball.rad, 2 * ball.rad, 2 * ball.rad, ball.hBitmap, true);// шарик
 }
 
-void CheckWalls()
-{
-    if (ball.x < ball.rad || ball.x > window.width - ball.rad)
-    {
-        ball.dx *= -1;
-        ProcessSound("bounce.wav");
-    }
-}
+//void CheckWalls()
+//{
+//    if (ball.x < ball.rad || ball.x > window.width - ball.rad)
+//    {
+//        ball.dx *= -1;
+//        ProcessSound("bounce.wav");
+//    }
+//}
 
 void CheckRoof()
 {
@@ -221,35 +221,48 @@ void CheckFloor()
     }
 }
 
-void ProcessRoom()
-{
-    if (ball.x > enemy.x and ball.x < enemy.x + enemy.width and ball.y < enemy.y + enemy.height and ball.y > enemy.y)
+void CheckTower() {
+    //if (ball.x > enemy.x and ball.x < enemy.x + enemy.width and ball.y < enemy.y + enemy.height and ball.y > enemy.y)
+    if (ball.x > enemy.x and ball.x < enemy.x + enemy.width) 
     {
-        game.balls--;//уменьшаем количество "жизней"
-        if (game.balls < 0) { //проверка условия окончания "жизней"
-
-            MessageBoxA(window.hWnd, "game over", "", MB_OK);//выводим сообщение о проигрыше
-            InitGame();//переинициализируем игру
+        if (ball.y < enemy.y + enemy.height and ball.y > enemy.y) {
+            
+            ball.dx *= -1;
+            ball.dy *= -1;
         }
-        game.action = false;//приостанавливаем игру, пока игрок не нажмет пробел
+
+        //game.balls--;//уменьшаем количество "жизней"
+        //if (game.balls < 0) { //проверка условия окончания "жизней"
+
+            //MessageBoxA(window.hWnd, "game over", "", MB_OK);//выводим сообщение о проигрыше
+            //InitGame();//переинициализируем игру
+        //}
+        //game.action = false;//приостанавливаем игру, пока игрок не нажмет пробел
         //ball.x = racket.x;//инициализируем координаты шарика - ставим его на ракетку
         //ball.y = racket.y - ball.rad;
-        game.score++;
+        //game.score++;
     }
-    
-    if (ball.x < 0 || ball.x > window.width || ball.y > window.height)
-    {
-        game.balls--;//уменьшаем количество "жизней"
-        ProcessSound("fail.wav");//играем звук
-        if (game.balls < 0) { //проверка условия окончания "жизней"
+}
+void CheckWalls() {
+if (ball.x < 0 || ball.x > window.width || ball.y > window.height) {
+    game.balls--;//уменьшаем количество "жизней"
+    ProcessSound("fail.wav");//играем звук
+    if (game.balls < 0) { //проверка условия окончания "жизней"
 
-            MessageBoxA(window.hWnd, "game over", "", MB_OK);//выводим сообщение о проигрыше
-            InitGame();//переинициализируем игру
-        }
-        game.action = false;//приостанавливаем игру, пока игрок не нажмет пробел
-        ball.x = racket.x;//инициализируем координаты шарика - ставим его на ракетку
-        ball.y = racket.y - ball.rad;
+        MessageBoxA(window.hWnd, "game over", "", MB_OK);//выводим сообщение о проигрыше
+        InitGame();//переинициализируем игру
     }
+    game.action = false;//приостанавливаем игру, пока игрок не нажмет пробел
+    ball.x = racket.x;//инициализируем координаты шарика - ставим его на ракетку
+    ball.y = racket.y - ball.rad;
+}
+}
+
+
+void ProcessRoom()
+{
+    CheckTower();
+    CheckWalls();
 }
 void ProcessBall()
 {
@@ -303,6 +316,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         ShowScore();//рисуем очик и жизни
         BitBlt(window.device_context, 0, 0, window.width, window.height, window.context, 0, 0, SRCCOPY);//копируем буфер в окно
         Sleep(16);//ждем 16 милисекунд (1/количество кадров в секунду)
+
 
         ProcessInput();//опрос клавиатуры
         ProcessBall();//перемещаем шарик

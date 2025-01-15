@@ -165,7 +165,9 @@ void ShowRacketAndBall()
     ShowBitmap(window.context, enemy.x - racket.width / 2, racket.y , racket.width, racket.height, enemy.hBitmap);//ракетка оппонента
     ShowBitmap(window.context, ball.x - ball.rad, ball.y - ball.rad, 2 * ball.rad, 2 * ball.rad, ball.hBitmap,true);// шарик
 }
-
+void CheckTower() {
+    if 
+}
 void CheckWalls()
 {
     if (ball.x < ball.rad || ball.x > window.width - ball.rad)
@@ -229,6 +231,7 @@ void CheckFloor()
 void ProcessRoom()
 {
     //обрабатываем стены, потолок и пол. принцип - угол падения равен углу отражения, а значит, для отскока мы можем просто инвертировать часть вектора движения шарика
+    CheckTower();
     CheckWalls();
     CheckRoof();
     CheckFloor();
@@ -271,8 +274,8 @@ int main()
 
     while (true)
     {
-        ShowRacketAndBall();//рисуем фон, ракетку и шарик
-        ShowScore();//рисуем очик и жизни
+        //ShowRacketAndBall();//рисуем фон, ракетку и шарик
+        //ShowScore();//рисуем очик и жизни
         BitBlt(window.device_context, 0, 0, window.width, window.height, window.context, 0, 0, SRCCOPY);//копируем буфер в окно
         Sleep(16);//ждем 16 милисекунд (1/количество кадров в секунду)
 
