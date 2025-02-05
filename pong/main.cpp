@@ -8,8 +8,11 @@
 typedef struct {
     float x, y, width, height, rad, dx, dy, speed;
     HBITMAP hBitmap;//хэндл к спрайту шарика 
+    bool active;
 } sprite;
-
+const int tower_size_x = 3, tower_size_y = 5;
+sprite tower0[tower_size_x][tower_size_y];
+sprite tower1[tower_size_x][tower_size_y];
 sprite racket;//ракетка игрока
 sprite enemy;//ракетка противника
 sprite ball;//шарик
@@ -26,8 +29,39 @@ struct {
 } window;
 
 HBITMAP hBack;// хэндл для фонового изображения
+HBITMAP hBrick;
 
 //cекция кода
+void InitTower1() {
+    for (int i = 0; i < tower_size_x; i++) 
+    {
+        for (int j = 0; j < tower_size_y; j++)
+        {
+            tower1[i][j].hBitmap = hBrick;
+            tower1[i][j].width = window.width / 50;
+            tower1[i][j].height = window.width / 20;
+            tower1[i][j].x = tower1[i][j].width  * i + window.width / 5 * 4;
+            tower1[i][j].y = tower1[i][j].height * j + window.height - tower1[i][j].height * tower_size_y;
+            tower1[i][j].active = true;
+        }
+    }
+
+}
+void InitTower0() {
+    for (int i = 0; i < tower_size_x; i++)
+    {
+        for (int j = 0; j < tower_size_y; j++)
+        {
+            tower0[i][j].hBitmap = hBrick;
+            tower0[i][j].width = window.width / 50;
+            tower0[i][j].height = window.width / 20;
+            tower0[i][j].x = tower0[i][j].width * i + window.width / 5;
+            tower0[i][j].y = tower0[i][j].height * j + window.height - tower0[i][j].height * tower_size_y;
+            tower0[i][j].active = true;
+        }
+    }
+
+}
 
 void InitGame()
 {
@@ -38,8 +72,13 @@ void InitGame()
     racket.hBitmap = (HBITMAP)LoadImageA(NULL, "racket.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     enemy.hBitmap = (HBITMAP)LoadImageA(NULL, "racket_enemy.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     hBack = (HBITMAP)LoadImageA(NULL, "c:/Users/Kirill/Downloads/Towers/pong/Debug/back.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-    //------------------------------------------------------
 
+    hBrick = racket.hBitmap;
+
+
+    //------------------------------------------------------
+    InitTower1();
+    InitTower0();
     racket.width = 105;
     racket.height = 300;
     racket.speed = 30;//скорость перемещения ракетки
@@ -146,7 +185,21 @@ void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool
 void ShowRacketAndBall()
 {
     ShowBitmap(window.context, 0, 0, window.width, window.height, hBack);//задний фон
-    ShowBitmap(window.context, racket.x - racket.width / 2., racket.y, racket.width, racket.height, racket.hBitmap);// ракетка игрока
+    for (int i = 0; i < tower_size_x; i++)
+    {
+        for (int j = 0; j < tower_size_y; j++)
+        {
+            if (tower0[i][j].active)
+            {
+                ShowBitmap(window.context, tower0[i][j].x, tower0[i][j].y, tower0[i][j].width, tower0[i][j].height, tower0[i][j].hBitmap);
+            }
+            if (tower1[i][j].active)
+            {
+                ShowBitmap(window.context, tower1[i][j].x, tower1[i][j].y, tower1[i][j].width, tower1[i][j].height, tower1[i][j].hBitmap);
+            }
+        }
+    }
+    //ShowBitmap(window.context, racket.x - racket.width / 2., racket.y, racket.width, racket.height, racket.hBitmap);// ракетка игрока
 
     if (ball.dy < 0 && (enemy.x - racket.width / 4 > ball.x || ball.x > enemy.x + racket.width / 4))
     {
@@ -157,7 +210,7 @@ void ShowRacketAndBall()
 
     }
 
-    ShowBitmap(window.context, enemy.x - racket.width / 2, racket.y, racket.width, racket.height, enemy.hBitmap);//ракетка оппонента
+    //ShowBitmap(window.context, enemy.x - racket.width / 2, racket.y, racket.width, racket.height, enemy.hBitmap);//ракетка оппонента
     ShowBitmap(window.context, ball.x - ball.rad, ball.y - ball.rad, 2 * ball.rad, 2 * ball.rad, ball.hBitmap, true);// шарик
 }
 
@@ -229,6 +282,7 @@ void CheckTower() {
             
             ball.dx *= -1;
             ball.dy *= -1;
+
         }
 
         //game.balls--;//уменьшаем количество "жизней"
@@ -261,8 +315,36 @@ if (ball.x < 0 || ball.x > window.width || ball.y > window.height) {
 
 void ProcessRoom()
 {
-    CheckTower();
+   // CheckTower();
     CheckWalls();
+    for (int i = 0; i < tower_size_x; i++)
+    {
+        for (int j = 0; j < tower_size_y; j++)
+        {
+            if (ball.x > tower1[i][j].x and ball.x < tower1[i][j].x + tower1[i][j].width 
+                and ball.y > tower1[i][j].y and ball.y < tower1[i][j].y + tower1[i][j].height)
+            {
+                ball.dx *= -1;
+                ball.dy *= -1;
+                tower1[i][j].active = false;
+            }
+        }
+    }
+    for (int i = 0; i < tower_size_x; i++)
+    {
+        for (int j = 0; j < tower_size_y - 1; j++)
+        {
+            if (tower1[i][j - 1].active = false)
+            {
+                if (j - 1 != 0) 
+                {
+                    for (float a = 0; 
+                }
+                else    
+                    continue
+            }
+        }
+    }
 }
 void ProcessBall()
 {
