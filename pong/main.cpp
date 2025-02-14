@@ -338,10 +338,12 @@ void ProcessRoom()
             {
                 if (j - 1 != 0) 
                 {
-                    for (float a = 0; 
+                  //  for (float a = 0; 
                 }
-                else    
-                    continue
+                else
+                {
+                    continue;
+                }
             }
         }
     }
