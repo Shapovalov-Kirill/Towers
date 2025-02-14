@@ -95,7 +95,7 @@ void InitGame()
     enemy.height = 300;
     ball.dy = (rand() % 65 + 35) / 100.;//формируем вектор полета шарика
     ball.dx = -(1 - ball.dy);//формируем вектор полета шарика
-    ball.speed = 50;
+    ball.speed = 30;
     ball.rad = 20;
     ball.x = racket.x;//x координата шарика - на середие ракетки
     ball.y = racket.y - ball.rad;//шарик лежит сверху ракетки
@@ -107,7 +107,7 @@ void InitGame()
 
 void ProcessSound(const char* name)//проигрывание аудиофайла в формате .wav, файл должен лежать в той же папке где и программа
 {
-    PlaySound(TEXT(name), NULL, SND_FILENAME | SND_ASYNC);//переменная name содежрит имя файла. флаг ASYNC позволяет проигрывать звук паралельно с исполнением программы
+   // PlaySound(TEXT(name), NULL, SND_FILENAME | SND_ASYNC);//переменная name содежрит имя файла. флаг ASYNC позволяет проигрывать звук паралельно с исполнением программы
 }
 
 void ShowScore()
@@ -199,9 +199,8 @@ void ShowRacketAndBall()
             {
                 ShowBitmap(window.context, tower0[i][j].x, tower0[i][j].y, tower0[i][j].width, tower0[i][j].height, tower0[i][j].hBitmap);
             }
-            int k = min(j + 1, tower_size_y-1);
 
-            if (tower0[i][j].active)
+            if (tower1[i][j].active)
             {
                 float stp = tower1[i][j].fall_steps;
                 float a = tower1[i][j].height * stp/10.;
@@ -352,15 +351,19 @@ void ProcessRoom()
                     if (tower1[i][j].fall_steps == 10)
                     {
                         tower1[i][j].fall_steps = 0;
+                        tower1[i][j].active = false;
 
-                        tower1[i][j+1].active = false;
-                        tower1[i][j].active = true;
+                        tower1[i][j+1].fall_steps = 0;
+                        tower1[i][j+1].active = true;
+                        
                     }
                     else
                     {
                         tower1[i][j].fall_steps++;
-                        return;
+                        
                     }
+
+                    return;
                 }
         }
     }
@@ -374,9 +377,9 @@ void ProcessBall()
         //если игра в активном режиме - перемещаем шарик
         ball.x += ball.dx * ball.speed;
         ball.y += ball.dy * ball.speed;
-        ball.dy += 0.015;
-        ball.dx *= 0.99;
-        ball.dy *= 0.99;
+        ball.dy += 0.0015;
+        ball.dx *= 0.999;
+        ball.dy *= 0.999;
     }
     else
     {
