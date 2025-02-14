@@ -9,6 +9,7 @@ typedef struct {
     float x, y, width, height, rad, dx, dy, speed;
     HBITMAP hBitmap;//хэндл к спрайту шарика 
     bool active;
+    int fall_steps;
 } sprite;
 const int tower_size_x = 3, tower_size_y = 5;
 sprite tower0[tower_size_x][tower_size_y];
@@ -43,6 +44,8 @@ void InitTower1() {
             tower1[i][j].x = tower1[i][j].width  * i + window.width / 5 * 4;
             tower1[i][j].y = tower1[i][j].height * j + window.height - tower1[i][j].height * tower_size_y;
             tower1[i][j].active = true;
+            tower1[i][j].fall_steps = 0;
+
         }
     }
 
@@ -58,6 +61,7 @@ void InitTower0() {
             tower0[i][j].x = tower0[i][j].width * i + window.width / 5;
             tower0[i][j].y = tower0[i][j].height * j + window.height - tower0[i][j].height * tower_size_y;
             tower0[i][j].active = true;
+            tower1[i][j].fall_steps = 0;
         }
     }
 
@@ -71,7 +75,7 @@ void InitGame()
     ball.hBitmap = (HBITMAP)LoadImageA(NULL, "ball.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     racket.hBitmap = (HBITMAP)LoadImageA(NULL, "racket.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     enemy.hBitmap = (HBITMAP)LoadImageA(NULL, "racket_enemy.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-    hBack = (HBITMAP)LoadImageA(NULL, "c:/Users/Kirill/Downloads/Towers/pong/Debug/back.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    hBack = (HBITMAP)LoadImageA(NULL, "back.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
     hBrick = racket.hBitmap;
 
@@ -91,7 +95,7 @@ void InitGame()
     enemy.height = 300;
     ball.dy = (rand() % 65 + 35) / 100.;//формируем вектор полета шарика
     ball.dx = -(1 - ball.dy);//формируем вектор полета шарика
-    ball.speed = 30;
+    ball.speed = 50;
     ball.rad = 20;
     ball.x = racket.x;//x координата шарика - на середие ракетки
     ball.y = racket.y - ball.rad;//шарик лежит сверху ракетки
@@ -185,6 +189,8 @@ void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool
 void ShowRacketAndBall()
 {
     ShowBitmap(window.context, 0, 0, window.width, window.height, hBack);//задний фон
+
+
     for (int i = 0; i < tower_size_x; i++)
     {
         for (int j = 0; j < tower_size_y; j++)
@@ -193,24 +199,17 @@ void ShowRacketAndBall()
             {
                 ShowBitmap(window.context, tower0[i][j].x, tower0[i][j].y, tower0[i][j].width, tower0[i][j].height, tower0[i][j].hBitmap);
             }
-            if (tower1[i][j].active)
+            int k = min(j + 1, tower_size_y-1);
+
+            if (tower0[i][j].active)
             {
-                ShowBitmap(window.context, tower1[i][j].x, tower1[i][j].y, tower1[i][j].width, tower1[i][j].height, tower1[i][j].hBitmap);
+                float stp = tower1[i][j].fall_steps;
+                float a = tower1[i][j].height * stp/10.;
+                ShowBitmap(window.context, tower1[i][j].x, tower1[i][j].y+a, tower1[i][j].width, tower1[i][j].height, tower1[i][j].hBitmap);
             }
         }
     }
-    //ShowBitmap(window.context, racket.x - racket.width / 2., racket.y, racket.width, racket.height, racket.hBitmap);// ракетка игрока
 
-    if (ball.dy < 0 && (enemy.x - racket.width / 4 > ball.x || ball.x > enemy.x + racket.width / 4))
-    {
-        //имитируем разумность оппонента. на самом деле, компьютер никогда не проигрывает, и мы не считаем попадает ли его ракетка по шарику
-        //вместо этого, мы всегда делаем отскок от потолка, а раектку противника двигаем - подставляем под шарик
-        //движение будет только если шарик летит вверх, и только если шарик по оси X выходит за пределы половины длины ракетки
-        //в этом случае, мы смешиваем координаты ракетки и шарика в пропорции 9 к 1
-
-    }
-
-    //ShowBitmap(window.context, enemy.x - racket.width / 2, racket.y, racket.width, racket.height, enemy.hBitmap);//ракетка оппонента
     ShowBitmap(window.context, ball.x - ball.rad, ball.y - ball.rad, 2 * ball.rad, 2 * ball.rad, ball.hBitmap, true);// шарик
 }
 
@@ -283,6 +282,7 @@ void CheckTower() {
             ball.dx *= -1;
             ball.dy *= -1;
 
+
         }
 
         //game.balls--;//уменьшаем количество "жизней"
@@ -297,26 +297,31 @@ void CheckTower() {
         //game.score++;
     }
 }
-void CheckWalls() {
-if (ball.x < 0 || ball.x > window.width || ball.y > window.height) {
-    game.balls--;//уменьшаем количество "жизней"
-    ProcessSound("fail.wav");//играем звук
-    if (game.balls < 0) { //проверка условия окончания "жизней"
+void CheckWalls() 
+{
+    if (ball.x < 0 || ball.x > window.width || ball.y > window.height) 
+    {
+        game.balls--;//уменьшаем количество "жизней"
+        ProcessSound("fail.wav");//играем звук
+        if (game.balls < 0) { //проверка условия окончания "жизней"
 
-        MessageBoxA(window.hWnd, "game over", "", MB_OK);//выводим сообщение о проигрыше
-        InitGame();//переинициализируем игру
+            MessageBoxA(window.hWnd, "game over", "", MB_OK);//выводим сообщение о проигрыше
+            InitGame();//переинициализируем игру
+        }
+        game.action = false;//приостанавливаем игру, пока игрок не нажмет пробел
+        ball.x = racket.x;//инициализируем координаты шарика - ставим его на ракетку
+        ball.y = racket.y - ball.rad;
     }
-    game.action = false;//приостанавливаем игру, пока игрок не нажмет пробел
-    ball.x = racket.x;//инициализируем координаты шарика - ставим его на ракетку
-    ball.y = racket.y - ball.rad;
-}
 }
 
 
 void ProcessRoom()
 {
-   // CheckTower();
+    //CheckTower();
     CheckWalls();
+
+
+
     for (int i = 0; i < tower_size_x; i++)
     {
         for (int j = 0; j < tower_size_y; j++)
@@ -324,30 +329,44 @@ void ProcessRoom()
             if (ball.x > tower1[i][j].x and ball.x < tower1[i][j].x + tower1[i][j].width 
                 and ball.y > tower1[i][j].y and ball.y < tower1[i][j].y + tower1[i][j].height)
             {
-                ball.dx *= -1;
-                ball.dy *= -1;
-                tower1[i][j].active = false;
+                if (tower1[i][j].active)
+                {
+
+                    ball.dx *= -1;
+                    ball.dy *= -1;
+                    tower1[i][j].active = false;
+                }
             }
         }
     }
+
     for (int i = 0; i < tower_size_x; i++)
     {
-        for (int j = 0; j < tower_size_y - 1; j++)
+        for (int j = tower_size_y-2; j >=0 ; j--)
         {
-            if (tower1[i][j - 1].active = false)
-            {
-                if (j - 1 != 0) 
+            
+                if (tower1[i][j].active == true && tower1[i][j+1].active == false)
                 {
-                  //  for (float a = 0; 
+                    
+
+                    if (tower1[i][j].fall_steps == 10)
+                    {
+                        tower1[i][j].fall_steps = 0;
+
+                        tower1[i][j+1].active = false;
+                        tower1[i][j].active = true;
+                    }
+                    else
+                    {
+                        tower1[i][j].fall_steps++;
+                        return;
+                    }
                 }
-                else
-                {
-                    continue;
-                }
-            }
         }
     }
-}
+
+  
+} 
 void ProcessBall()
 {
     if (game.action)
@@ -405,6 +424,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         ProcessInput();//опрос клавиатуры
         ProcessBall();//перемещаем шарик
         ProcessRoom();//обрабатываем отскоки от стен и каретки, попадание шарика в картетку
+        
     }
 
 }
