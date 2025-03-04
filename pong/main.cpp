@@ -87,7 +87,7 @@ void InitGame()
     racket.width = 105;
     racket.height = 300;
     racket.speed = 30;//скорость перемещения ракетки
-    racket.x = window.width / 5;//ракетка посередине окна
+    racket.x = window.width / 5 + racket.width;//ракетка посередине окна
     racket.y = window.height - racket.height;//чуть выше низа экрана - на высоту ракетки
 
     enemy.x = window.width / 5 * 4;//х координату оппонета ставим в ту же точку что и игрока
@@ -96,26 +96,22 @@ void InitGame()
     enemy.height = 300;
     ball.dy = (rand() % 65 + 35) / 100.;//формируем вектор полета шарика
     ball.dx = -(1 - ball.dy);//формируем вектор полета шарика
-    ball.speed = 50;
+    ball.speed = 38;
     ball.rad = 20;
     ball.x = racket.x;//x координата шарика - на середие ракетки
     ball.y = racket.y - ball.rad;//шарик лежит сверху ракетки
     ball_enemy.x = enemy.x;
-    ball_enemy.dy = (rand() % 65 + 35) / 100.;
-    ball_enemy.dx = -(1 - ball.dy);
-    float len_enemy = sqrt(ball_enemy.dx * ball_enemy.dx + ball_enemy.dy * ball_enemy.dy);
-    ball_enemy.dx = ball_enemy.dx / len_enemy;
-    ball_enemy.dy = ball_enemy.dy / len_enemy;
-    ball_enemy.speed = 50;
+    ball_enemy.speed = 38;
     ball_enemy.y = enemy.y;
+    ball_enemy.dx = -0.5;
+    ball_enemy.dy = -0.74;
     game.score = 0;
     game.balls = 9;
-
 }
 
 void ProcessSound(const char* name)//проигрывание аудиофайла в формате .wav, файл должен лежать в той же папке где и программа
 {
-   // PlaySound(TEXT(name), NULL, SND_FILENAME | SND_ASYNC);//переменная name содежрит имя файла. флаг ASYNC позволяет проигрывать звук паралельно с исполнением программы
+   // PlaySound(TEXT(name), NULL, SND_FILENAME | SND_ASYNC);//переменная name содержит имя файла. флаг ASYNC позволяет проигрывать звук паралельно с исполнением программы
 }
 
 void ShowScore()
@@ -131,11 +127,28 @@ void ShowScore()
     _itoa_s(game.score, txt, 10);//преобразование числовой переменной в текст. текст окажется в переменной txt
     TextOutA(window.context, 10, 10, "Score", 5);
     TextOutA(window.context, 200, 10, (LPCSTR)txt, strlen(txt));
-
     _itoa_s(game.balls, txt, 10);
     TextOutA(window.context, 10, 100, "Balls", 5);
     TextOutA(window.context, 200, 100, (LPCSTR)txt, strlen(txt));
+    bool a = true;
+    for (int i = 0; i < tower_size_x; i++)
+    {
+        for (int j = 0; j < tower_size_y; j++)
+        {
+            if (tower0[i][j].active)
+                a = false;
+            else
+                continue;
+        }
+    }
+    if (a)
+    {
+        TextOutA(window.context, window.width / 2 - 100, window.height / 2 - 25, "You Lose", 8);
+        game.action = false;
+    }
 }
+
+int enemyAttackTime = 0;
 
 void ProcessInput()
 {
@@ -161,15 +174,21 @@ void ProcessInput()
         ball.y = racket.y - ball.rad;//шарик лежит сверху ракетки
         ball.dx = mouse_cords.x - ball.x;
         ball.dy = mouse_cords.y - ball.y;
-        ball_enemy.dy = mouse_cords.y - ball.y;
-        ball_enemy.dx = -1 * (mouse_cords.x - ball.x);
         float len = sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
         ball.dx = ball.dx / len;
         ball.dy = ball.dy / len;
-        float len_enemy = sqrt(ball_enemy.dx * ball_enemy.dx + ball_enemy.dy * ball_enemy.dy);
-        ball_enemy.dx = ball_enemy.dx / len_enemy;
-        ball_enemy.dy = ball_enemy.dy / len_enemy;
     }
+    int t = 0;
+    if (ball_enemy.active == true)
+    {
+        enemyAttackTime = timeGetTime();
+    }
+    if (ball_enemy.active == false)
+    {
+        t = timeGetTime();
+    }
+    if (t - enemyAttackTime > 800)
+        ball_enemy.active = true;
 }
 void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool alpha = false)
 {
@@ -287,9 +306,9 @@ void CheckFloor()
 }
 
 
-void CheckWalls() 
+void CheckWalls()
 {
-    if (ball.x < 0 || ball.x > window.width || ball.y > window.height) 
+    if (ball.x < 0 || ball.x > window.width || ball.y > window.height)
     {
         game.balls--;//уменьшаем количество "жизней"
         ProcessSound("fail.wav");//играем звук
@@ -302,9 +321,20 @@ void CheckWalls()
         ball.x = racket.x;//инициализируем координаты шарика - ставим его на ракетку
         ball.y = racket.y - ball.rad;
     }
+    if (ball_enemy.x < 0 || ball_enemy.x > window.width || ball_enemy.y > window.height)
+        ball_enemy.active = false;
+    if (ball_enemy.active == false)
+    {
+        ball_enemy.x = enemy.x;
+        ball_enemy.y = enemy.y;
+        double min = 0.0;
+        double max = 1.0;
+        ball_enemy.dx = -(rand() % 10 / 100. + 0.41);
+        ball_enemy.dy = -(rand() % 15 / 100. + 0.62);
+        
+        
+    }
 }
-
-
 void ProcessRoom()
 {
     CheckWalls();
@@ -325,6 +355,25 @@ void ProcessRoom()
                     ball.dy *= 1;
                     ball.dx *= 0.4;
                     tower1[i][j].active = false;
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < tower_size_x; i++)
+    {
+        for (int j = 0; j < tower_size_y; j++)
+        {
+            if (ball_enemy.x > tower0[i][j].x and ball_enemy.x < tower0[i][j].x + tower0[i][j].width
+                and ball_enemy.y > tower0[i][j].y and ball_enemy.y < tower0[i][j].y + tower0[i][j].height)
+            {
+                if (tower0[i][j].active)
+                {
+
+                    ball_enemy.dx *= -1;
+                    ball_enemy.dy *= 1;
+                    ball_enemy.dx *= 0.4;
+                    tower0[i][j].active = false;
                 }
             }
         }
@@ -354,7 +403,34 @@ void ProcessRoom()
                 }
         }
     }
+
+    for (int i = 0; i < tower_size_x; i++)
+    {
+        for (int j = tower_size_y - 2; j >= 0; j--)
+        {
+            if (tower0[i][j].active == true && tower0[i][j + 1].active == false)
+            {
+                if (tower0[i][j].fall_steps == 10)
+                {
+                    tower0[i][j].fall_steps = 0;
+                    tower0[i][j].active = false;
+
+                    tower0[i][j + 1].fall_steps = 0;
+                    tower0[i][j + 1].active = true;
+                }
+                else
+                {
+                    tower0[i][j].fall_steps++;
+
+                }
+
+                return;
+            }
+        }
+    }
 } 
+
+
 void ProcessBall()
 {
     if (game.action)
