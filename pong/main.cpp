@@ -19,6 +19,7 @@ sprite enemy;//ракетка противника
 sprite ball;//шарик
 sprite ball_enemy; //шарик противника
 POINT mouse_cords;
+
 struct {
     int score, balls;//количество набранных очков и оставшихся "жизней"
     bool action = false;//состояние - ожидание (игрок должен нажать пробел) или игра
@@ -62,7 +63,7 @@ void InitTower0() {
             tower0[i][j].x = tower0[i][j].width * i + window.width / 5;
             tower0[i][j].y = tower0[i][j].height * j + window.height - tower0[i][j].height * tower_size_y;
             tower0[i][j].active = true;
-            tower1[i][j].fall_steps = 0;
+            tower0[i][j].fall_steps = 0;
         }
     }
 
@@ -106,7 +107,7 @@ void InitGame()
     ball_enemy.dx = -0.5;
     ball_enemy.dy = -0.74;
     game.score = 0;
-    game.balls = 9;
+    game.balls = 100;
 }
 
 void ProcessSound(const char* name)//проигрывание аудиофайла в формате .wav, файл должен лежать в той же папке где и программа
@@ -130,7 +131,7 @@ void ShowScore()
     _itoa_s(game.balls, txt, 10);
     TextOutA(window.context, 10, 100, "Balls", 5);
     TextOutA(window.context, 200, 100, (LPCSTR)txt, strlen(txt));
-    bool a = true;
+    bool a = true, b = true;
     for (int i = 0; i < tower_size_x; i++)
     {
         for (int j = 0; j < tower_size_y; j++)
@@ -143,8 +144,25 @@ void ShowScore()
     }
     if (a)
     {
-        TextOutA(window.context, window.width / 2 - 100, window.height / 2 - 25, "You Lose", 8);
-        game.action = false;
+        MessageBoxA(window.hWnd, "You Lose", "", MB_OK);
+        ProcessSound("fail.wav"); 
+        InitGame();
+    }
+    for (int i = 0; i < tower_size_x; i++)
+    {
+        for (int j = 0; j < tower_size_y; j++)
+        {
+            if (tower1[i][j].active)
+                b = false;
+            else
+                continue;
+        }
+    }
+    if (b)
+    {
+        MessageBoxA(window.hWnd, "You Win", "", MB_OK);
+        ProcessSound("bounce.wav");
+        InitGame();
     }
 }
 
@@ -187,7 +205,7 @@ void ProcessInput()
     {
         t = timeGetTime();
     }
-    if (t - enemyAttackTime > 800)
+    if (t - enemyAttackTime > 1000)
         ball_enemy.active = true;
 }
 void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool alpha = false)
@@ -221,22 +239,29 @@ void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool
 void ShowRacketAndBall()
 {
     ShowBitmap(window.context, 0, 0, window.width, window.height, hBack);//задний фон
-
+    for (int i = 0; i < tower_size_x; i++)
+    {
+        for (int j = 0; j < tower_size_y; j++)
+        {
+            if (tower1[i][j].active)
+            {
+                float stp = tower1[i][j].fall_steps;
+                float a = tower1[i][j].height * stp / 10.;
+                ShowBitmap(window.context, tower1[i][j].x, tower1[i][j].y + a, tower1[i][j].width, tower1[i][j].height, tower1[i][j].hBitmap);
+            } 
+        }
+    }
 
     for (int i = 0; i < tower_size_x; i++)
     {
         for (int j = 0; j < tower_size_y; j++)
         {
+            
             if (tower0[i][j].active)
             {
-                ShowBitmap(window.context, tower0[i][j].x, tower0[i][j].y, tower0[i][j].width, tower0[i][j].height, tower0[i][j].hBitmap);
-            }
-
-            if (tower1[i][j].active)
-            {
-                float stp = tower1[i][j].fall_steps;
-                float a = tower1[i][j].height * stp/10.;
-                ShowBitmap(window.context, tower1[i][j].x, tower1[i][j].y+a, tower1[i][j].width, tower1[i][j].height, tower1[i][j].hBitmap);
+                float stp = tower0[i][j].fall_steps;
+                float a = tower0[i][j].height * stp / 10.;
+                ShowBitmap(window.context, tower0[i][j].x, tower0[i][j].y + a, tower0[i][j].width, tower0[i][j].height, tower0[i][j].hBitmap);
             }
         }
     }
@@ -272,7 +297,7 @@ void CheckFloor()
         if (!tail && ball.x >= racket.x - racket.width / 2. - ball.rad && ball.x <= racket.x + racket.width / 2. + ball.rad)//шарик отбит, и мы не в режиме обработки хвоста
         {
             game.score++;//за каждое отбитие даем одно очко
-             ball.speed += 5. / game.score;//но увеличиваем сложность - прибавляем скорости шарику
+            ball.speed += 5. / game.score;//но увеличиваем сложность - прибавляем скорости шарику
             ball.dy *= -1;//отскок
             racket.width -= 10. / game.score;//дополнительно уменьшаем ширину ракетки - для сложности
             ProcessSound("bounce.wav");//играем звук отскока
@@ -378,32 +403,6 @@ void ProcessRoom()
             }
         }
     }
-
-    for (int i = 0; i < tower_size_x; i++)
-    {
-        for (int j = tower_size_y-2; j >=0 ; j--)
-        {
-                if (tower1[i][j].active == true && tower1[i][j+1].active == false)
-                {    
-                    if (tower1[i][j].fall_steps == 10)
-                    {
-                        tower1[i][j].fall_steps = 0;
-                        tower1[i][j].active = false;
-
-                        tower1[i][j+1].fall_steps = 0;
-                        tower1[i][j+1].active = true;                    
-                    }
-                    else
-                    {
-                        tower1[i][j].fall_steps++;
-                        
-                    }
-
-                    return;
-                }
-        }
-    }
-
     for (int i = 0; i < tower_size_x; i++)
     {
         for (int j = tower_size_y - 2; j >= 0; j--)
@@ -423,7 +422,30 @@ void ProcessRoom()
                     tower0[i][j].fall_steps++;
 
                 }
+                return;
+            }
+        }
+    }
 
+    for (int i = 0; i < tower_size_x; i++)
+    {
+        for (int j = tower_size_y - 2; j >= 0; j--)
+        {
+            if (tower1[i][j].active == true && tower1[i][j+1].active == false)
+            {    
+                if (tower1[i][j].fall_steps == 10)
+                {
+                    tower1[i][j].fall_steps = 0;
+                    tower1[i][j].active = false;
+
+                    tower1[i][j + 1].fall_steps = 0;
+                    tower1[i][j + 1].active = true;                    
+                }
+                else
+                {
+                    tower1[i][j].fall_steps++;
+                        
+                }
                 return;
             }
         }
@@ -485,7 +507,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     while (!GetAsyncKeyState(VK_ESCAPE))
     {
         ShowRacketAndBall();//рисуем фон, ракетку и шарик
-        ShowScore();//рисуем очик и жизни
+        ShowScore();//рисуем очки и жизни
         BitBlt(window.device_context, 0, 0, window.width, window.height, window.context, 0, 0, SRCCOPY);//копируем буфер в окно
         Sleep(16);//ждем 16 милисекунд (1/количество кадров в секунду)
 
