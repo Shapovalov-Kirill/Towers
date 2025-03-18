@@ -85,7 +85,8 @@ void InitGame()
     //------------------------------------------------------
     InitTower1();
     InitTower0();
-    racket.width = 105;
+    //105
+    racket.width = 200;
     racket.height = 300;
     racket.speed = 30;//скорость перемещения ракетки
     racket.x = window.width / 5 + racket.width;//ракетка посередине окна
@@ -97,17 +98,20 @@ void InitGame()
     enemy.height = 300;
     ball.dy = (rand() % 65 + 35) / 100.;//формируем вектор полета шарика
     ball.dx = -(1 - ball.dy);//формируем вектор полета шарика
-    ball.speed = 38;
+    float wind = window.width / 1920.;
+    ball.speed = 38 * wind;
     ball.rad = 20;
     ball.x = racket.x;//x координата шарика - на середие ракетки
     ball.y = racket.y - ball.rad;//шарик лежит сверху ракетки
     ball_enemy.x = enemy.x;
-    ball_enemy.speed = 38;
+    ball_enemy.speed = 38 * wind;
     ball_enemy.y = enemy.y;
-    ball_enemy.dx = -0.5;
-    ball_enemy.dy = -0.74;
+    ball_enemy.dx = -(rand() % 10 / 100. + 0.48);
+    ball_enemy.dy = -(rand() % 15 / 100. + 0.62);
     game.score = 0;
     game.balls = 100;
+    // ширина блока - 51
+    // высота блока - 128
 }
 
 void ProcessSound(const char* name)//проигрывание аудиофайла в формате .wav, файл должен лежать в той же папке где и программа
@@ -265,7 +269,7 @@ void ShowRacketAndBall()
             }
         }
     }
-
+   
     ShowBitmap(window.context, ball.x - ball.rad, ball.y - ball.rad, 2 * ball.rad, 2 * ball.rad, ball.hBitmap, true);// шарик
     ShowBitmap(window.context, ball_enemy.x - ball.rad, ball_enemy.y - ball.rad, 2 * ball.rad, 2 * ball.rad, ball.hBitmap, true);
 }
@@ -354,34 +358,79 @@ void CheckWalls()
         ball_enemy.y = enemy.y;
         double min = 0.0;
         double max = 1.0;
-        ball_enemy.dx = -(rand() % 10 / 100. + 0.41);
+        ball_enemy.dx = -(rand() % 10 / 100. + 0.48);
         ball_enemy.dy = -(rand() % 15 / 100. + 0.62);
-        
-        
+        /*for (int i = 0; i < tower_size_x; i++)
+        {
+            for (int j = 0; j < tower_size_y; j++)
+            {
+                if (tower0[i][j].active)
+                {
+                    ball_enemy.dx = tower0[i][j].x - ball_enemy.x + 5;
+                    ball_enemy.dy = -tower0[i][j].y + 30;
+                    float len = sqrt(ball_enemy.dx * ball_enemy.dx + ball_enemy.dy * ball_enemy.dy);
+                    ball_enemy.dx = ball_enemy.dx / len;
+                    ball_enemy.dy = ball_enemy.dy / len;
+                }
+                    
+            }
+
+        }*/
     }
 }
 void ProcessRoom()
 {
     CheckWalls();
 
-
-
+   
     for (int i = 0; i < tower_size_x; i++)
     {
         for (int j = 0; j < tower_size_y; j++)
         {
-            if (ball.x > tower1[i][j].x and ball.x < tower1[i][j].x + tower1[i][j].width 
+            if (ball.x > tower1[i][j].x and ball.x < tower1[i][j].x + tower1[i][j].width
                 and ball.y > tower1[i][j].y and ball.y < tower1[i][j].y + tower1[i][j].height)
             {
                 if (tower1[i][j].active)
                 {
+                    float Left = -(ball.x + ball.rad) + tower1[i][j].x;
+                    float Right = (ball.x + ball.rad) - (tower1[i][j].x + tower1[i][j].width);
+                    float Up = -(ball.y + ball.rad) + tower1[i][j].y;
+                    float Down = (ball.y + ball.rad) - (tower1[i][j].y + tower1[i][j].height);
+                    float Minimx = min(Left, Right);
+                    float Minimy = min(Up, Down);
 
+                    if (Minimx < Minimy)
+                    {
+
+                        ball.dx *= -1;
+                        ball.dy *= 1;
+                        ball.dy *= 0.4;
+                        ball.dx *= 0.4;
+                        tower1[i][j].active = false;
+                    }
+                    else
+                    {
+                        ball.dx *= 1;
+                        ball.dy *= 1;
+                        ball.dy *= 0.4;
+                        ball.dx *= 0.4;
+                        tower1[i][j].active = false;
+                    }
+                }
+            }
+           
+
+            /*if (ball.x > tower1[i][j].x and ball.x < tower1[i][j].x + tower1[i][j].width
+                and ball.y > tower1[i][j].y and ball.y < tower1[i][j].y + tower1[i][j].height)
+            {
+                if (tower1[i][j].active)
+                {
                     ball.dx *= -1;
                     ball.dy *= 1;
                     ball.dx *= 0.4;
-                    tower1[i][j].active = false;
+                    tower1[i][j].active = false;                      
                 }
-            }
+            }*/
         }
     }
 
@@ -394,13 +443,33 @@ void ProcessRoom()
             {
                 if (tower0[i][j].active)
                 {
+                    float Left = -(ball_enemy.x + ball_enemy.rad) + tower0[i][j].x;
+                    float Right = (ball_enemy.x + ball_enemy.rad) - (tower0[i][j].x + tower0[i][j].width);
+                    float Up = -(ball_enemy.y + ball_enemy.rad) + tower0[i][j].y;
+                    float Down = (ball_enemy.y + ball_enemy.rad) - (tower0[i][j].y + tower0[i][j].height);
+                    float Minimx = min(Left, Right);
+                    float Minimy = min(Up, Down);
 
-                    ball_enemy.dx *= -1;
-                    ball_enemy.dy *= 1;
-                    ball_enemy.dx *= 0.4;
-                    tower0[i][j].active = false;
+                    if (Minimx < Minimy)
+                    {
+
+                        ball_enemy.dx *= 1;
+                        ball_enemy.dy *= -1;
+                        ball_enemy.dx *= 0.4;
+                        ball_enemy.dy *= 0.4;
+                        tower0[i][j].active = false;
+                    }
+                    else
+                    {
+                        ball_enemy.dx *= -1;
+                        ball_enemy.dy *= 1;
+                        ball_enemy.dx *= 0.4;
+                        ball_enemy.dy *= 0.4;
+                        tower0[i][j].active = false;
+                    }
                 }
             }
+            
         }
     }
     for (int i = 0; i < tower_size_x; i++)
