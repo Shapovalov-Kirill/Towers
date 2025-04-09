@@ -3,6 +3,8 @@
 //linker::input::additional dependensies Msimg32.lib; Winmm.lib
 
 #include "windows.h"
+#include <cmath>
+
 #include <math.h>
 // секция данных игры  
 typedef struct {
@@ -88,7 +90,7 @@ void InitGame()
     //105
     racket.width = 200;
     racket.height = 300;
-    racket.speed = 30;//скорость перемещения ракетки
+    racket.speed = 10;//скорость перемещения ракетки
     racket.x = window.width / 5 + racket.width;//ракетка посередине окна
     racket.y = window.height - racket.height;//чуть выше низа экрана - на высоту ракетки
 
@@ -110,8 +112,8 @@ void InitGame()
     ball_enemy.dy = -(rand() % 15 / 100. + 0.62);
     game.score = 0;
     game.balls = 100;
-    // ширина блока - 51
-    // высота блока - 128
+    // ширина блока - 51 wight
+    // высота блока - 128 height
 }
 
 void ProcessSound(const char* name)//проигрывание аудиофайла в формате .wav, файл должен лежать в той же папке где и программа
@@ -378,47 +380,55 @@ void CheckWalls()
         }*/
     }
 }
+//if (!(ball.x + ball.rad >= tower1[i][j].x + tower1[i][j].width or ball.x + ball.rad <= tower1[i][j].x)
+    //and !(ball.y + ball.rad >= tower1[i][j].y + tower1[i][j].height or ball.y + ball.rad <= tower1[i][j].y))
+
+//if ((ball.x + ball.rad = tower1[i][j].x and ball.y + ball.rad >= tower1[i][j].y and ball.y + ball.rad <= tower1[i][j].y + tower1[i][j].height)  //left
+//or (ball.y + ball.rad = tower1[i][j].y and ball.x + ball.rad >= tower1[i][j].x and ball.x + ball.rad >= tower1[i][j].x + tower1[i][j].width) //up
+//or (ball.x + ball.rad = tower1[i][j].x + tower1[i][j].width and ball.y + ball.rad >= tower1[i][j].y and ball.y + ball.rad <= tower1[i][j].y + tower1[i][j].height)) //right
+bool colls = false;
+
 void ProcessRoom()
 {
     CheckWalls();
-
    
     for (int i = 0; i < tower_size_x; i++)
     {
         for (int j = 0; j < tower_size_y; j++)
         {
-            if (ball.x > tower1[i][j].x and ball.x < tower1[i][j].x + tower1[i][j].width
-                and ball.y > tower1[i][j].y and ball.y < tower1[i][j].y + tower1[i][j].height)
-            {
-                if (tower1[i][j].active)
+            
+            /*if ((ball.x + ball.rad == tower1[i][j].x and ball.y + ball.rad >= tower1[i][j].y and ball.y + ball.rad <= tower1[i][j].y + tower1[i][j].height) 
+            or (ball.y + ball.rad == tower1[i][j].y and ball.x + ball.rad >= tower1[i][j].x and ball.x + ball.rad <= tower1[i][j].x + tower1[i][j].width) 
+            or (ball.x + ball.rad == tower1[i][j].x + tower1[i][j].width and ball.y + ball.rad >= tower1[i][j].y and ball.y + ball.rad <= tower1[i][j].y + tower1[i][j].height)) */
+
                 {
-                    float Left = -(ball.x + ball.rad) + tower1[i][j].x;
-                    float Right = (ball.x + ball.rad) - (tower1[i][j].x + tower1[i][j].width);
-                    float Up = -(ball.y + ball.rad) + tower1[i][j].y;
-                    float Down = (ball.y + ball.rad) - (tower1[i][j].y + tower1[i][j].height);
-                    float Minimx = min(Left, Right);
-                    float Minimy = min(Up, Down);
-
-                    if (Minimx < Minimy)
+                    if (tower1[i][j].active && !colls) 
                     {
+                        float Left =  abs((ball.x + ball.rad) - tower1[i][j].x);
+                        float Right = abs((ball.x + ball.rad) - (tower1[i][j].x + tower1[i][j].width));
+                        float Up = abs((ball.y + ball.rad) - tower1[i][j].y);
+                        float Down = abs((ball.y + ball.rad) - (tower1[i][j].y + tower1[i][j].height));
+                        float Minimx = min(Left, Right);
+                        float Minimy = min(Up, Down);
 
-                        ball.dx *= -1;
-                        ball.dy *= 1;
-                        ball.dy *= 0.4;
-                        ball.dx *= 0.4;
+                        if (Minimx < Minimy)
+                        {
+
+                            ball.dx *= -1;
+                            /*ball.dy *= 0.4;
+                            ball.dx *= 0.4;*/
+                        }
+                        else
+                        {
+                            ball.dy *= -1;
+                            /*ball.dy *= 0.4;
+                            ball.dx *= 1;*/                        
+                        }
                         tower1[i][j].active = false;
                     }
-                    else
-                    {
-                        ball.dx *= 1;
-                        ball.dy *= 1;
-                        ball.dy *= 0.4;
-                        ball.dx *= 0.4;
-                        tower1[i][j].active = false;
-                    }
-                }
-            }
-           
+
+                        //return;
+                }      
 
             /*if (ball.x > tower1[i][j].x and ball.x < tower1[i][j].x + tower1[i][j].width
                 and ball.y > tower1[i][j].y and ball.y < tower1[i][j].y + tower1[i][j].height)
@@ -443,10 +453,10 @@ void ProcessRoom()
             {
                 if (tower0[i][j].active)
                 {
-                    float Left = -(ball_enemy.x + ball_enemy.rad) + tower0[i][j].x;
-                    float Right = (ball_enemy.x + ball_enemy.rad) - (tower0[i][j].x + tower0[i][j].width);
-                    float Up = -(ball_enemy.y + ball_enemy.rad) + tower0[i][j].y;
-                    float Down = (ball_enemy.y + ball_enemy.rad) - (tower0[i][j].y + tower0[i][j].height);
+                    float Left = abs( - (ball_enemy.x + ball_enemy.rad) + tower0[i][j].x);
+                    float Right = abs((ball_enemy.x + ball_enemy.rad) - (tower0[i][j].x + tower0[i][j].width));
+                    float Up = abs( - (ball_enemy.y + ball_enemy.rad) + tower0[i][j].y);
+                    float Down = abs((ball_enemy.y + ball_enemy.rad) - (tower0[i][j].y + tower0[i][j].height));
                     float Minimx = min(Left, Right);
                     float Minimy = min(Up, Down);
 
@@ -582,8 +592,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
         ProcessInput();//опрос клавиатуры
-        ProcessBall();//перемещаем шарик
         ProcessRoom();//обрабатываем отскоки от стен и каретки, попадание шарика в картетку
+        ProcessBall();//перемещаем шарик
         
     }
 
