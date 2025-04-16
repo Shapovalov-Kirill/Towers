@@ -33,6 +33,7 @@ struct {
     int width, height;//сюда сохраним размеры окна которое создаст программа
 } window;
 
+
 HBITMAP hBack;// хэндл для фонового изображения
 HBITMAP hBrick;
 
@@ -49,7 +50,6 @@ void InitTower1() {
             tower1[i][j].y = tower1[i][j].height * j + window.height - tower1[i][j].height * tower_size_y;
             tower1[i][j].active = true;
             tower1[i][j].fall_steps = 0;
-
         }
     }
 
@@ -88,8 +88,8 @@ void InitGame()
     InitTower1();
     InitTower0();
     //105
-    racket.width = 200;
-    racket.height = 300;
+    racket.width = 200; /*200*/
+    racket.height = 300; /*300*/
     racket.speed = 10;//скорость перемещения ракетки
     racket.x = window.width / 5 + racket.width;//ракетка посередине окна
     racket.y = window.height - racket.height;//чуть выше низа экрана - на высоту ракетки
@@ -112,6 +112,9 @@ void InitGame()
     ball_enemy.dy = -(rand() % 15 / 100. + 0.62);
     game.score = 0;
     game.balls = 100;
+
+    
+
     // ширина блока - 51 wight
     // высота блока - 128 height
 }
@@ -341,6 +344,7 @@ void CheckWalls()
 {
     if (ball.x < 0 || ball.x > window.width || ball.y > window.height)
     {
+        
         game.balls--;//уменьшаем количество "жизней"
         ProcessSound("fail.wav");//играем звук
         if (game.balls < 0) { //проверка условия окончания "жизней"
@@ -351,15 +355,18 @@ void CheckWalls()
         game.action = false;//приостанавливаем игру, пока игрок не нажмет пробел
         ball.x = racket.x;//инициализируем координаты шарика - ставим его на ракетку
         ball.y = racket.y - ball.rad;
+        
     }
     if (ball_enemy.x < 0 || ball_enemy.x > window.width || ball_enemy.y > window.height)
         ball_enemy.active = false;
     if (ball_enemy.active == false)
     {
+        
         ball_enemy.x = enemy.x;
         ball_enemy.y = enemy.y;
         double min = 0.0;
         double max = 1.0;
+        
         ball_enemy.dx = -(rand() % 10 / 100. + 0.48);
         ball_enemy.dy = -(rand() % 15 / 100. + 0.62);
         /*for (int i = 0; i < tower_size_x; i++)
@@ -380,13 +387,9 @@ void CheckWalls()
         }*/
     }
 }
-//if (!(ball.x + ball.rad >= tower1[i][j].x + tower1[i][j].width or ball.x + ball.rad <= tower1[i][j].x)
-    //and !(ball.y + ball.rad >= tower1[i][j].y + tower1[i][j].height or ball.y + ball.rad <= tower1[i][j].y))
 
-//if ((ball.x + ball.rad = tower1[i][j].x and ball.y + ball.rad >= tower1[i][j].y and ball.y + ball.rad <= tower1[i][j].y + tower1[i][j].height)  //left
-//or (ball.y + ball.rad = tower1[i][j].y and ball.x + ball.rad >= tower1[i][j].x and ball.x + ball.rad >= tower1[i][j].x + tower1[i][j].width) //up
-//or (ball.x + ball.rad = tower1[i][j].x + tower1[i][j].width and ball.y + ball.rad >= tower1[i][j].y and ball.y + ball.rad <= tower1[i][j].y + tower1[i][j].height)) //right
-bool colls = false;
+
+// Сделать проверку коллизии на несколько попаданий через нахождение времени после попадания
 
 void ProcessRoom()
 {
@@ -397,42 +400,53 @@ void ProcessRoom()
         for (int j = 0; j < tower_size_y; j++)
         {
             
-            /*if ((ball.x + ball.rad == tower1[i][j].x and ball.y + ball.rad >= tower1[i][j].y and ball.y + ball.rad <= tower1[i][j].y + tower1[i][j].height) 
-            or (ball.y + ball.rad == tower1[i][j].y and ball.x + ball.rad >= tower1[i][j].x and ball.x + ball.rad <= tower1[i][j].x + tower1[i][j].width) 
-            or (ball.x + ball.rad == tower1[i][j].x + tower1[i][j].width and ball.y + ball.rad >= tower1[i][j].y and ball.y + ball.rad <= tower1[i][j].y + tower1[i][j].height)) */
-
+            if (!(ball.x + ball.rad >= tower1[i][j].x + tower1[i][j].width or ball.x + ball.rad <= tower1[i][j].x)
+            and !(ball.y + ball.rad >= tower1[i][j].y + tower1[i][j].height or ball.y + ball.rad <= tower1[i][j].y))
+            {
+                
+                if (tower1[i][j].active )
                 {
-                    if (tower1[i][j].active && !colls) 
+                    float Left = abs((ball.x + ball.rad) - tower1[i][j].x);
+                    /*float Right = abs((ball.x + ball.rad) - (tower1[i][j].x + tower1[i][j].width));*/
+                    float Up = abs((ball.y + ball.rad) - tower1[i][j].y);
+                    /*float Down = abs((ball.y + ball.rad) - (tower1[i][j].y + tower1[i][j].height));*/
+                    /*float Minimx = min(Left, Right);*/
+                    /*float Minimy = min(Up, Down);*/
+                    if (Left < Up)
                     {
-                        float Left =  abs((ball.x + ball.rad) - tower1[i][j].x);
-                        float Right = abs((ball.x + ball.rad) - (tower1[i][j].x + tower1[i][j].width));
-                        float Up = abs((ball.y + ball.rad) - tower1[i][j].y);
-                        float Down = abs((ball.y + ball.rad) - (tower1[i][j].y + tower1[i][j].height));
-                        float Minimx = min(Left, Right);
-                        float Minimy = min(Up, Down);
 
-                        if (Minimx < Minimy)
-                        {
-
-                            ball.dx *= -1;
-                            /*ball.dy *= 0.4;
-                            ball.dx *= 0.4;*/
-                        }
-                        else
-                        {
-                            ball.dy *= -1;
-                            /*ball.dy *= 0.4;
-                            ball.dx *= 1;*/                        
-                        }
-                        tower1[i][j].active = false;
+                        ball.dx *= -1;
+                        ball.dy *= 0.6;
+                        ball.dx *= 0.6;
+                    }
+                    else
+                    {
+                        ball.dy *= -1;
+                        ball.dy *= 0.6;
+                        ball.dx *= 0.6;
                     }
 
-                        //return;
-                }      
+
+                    /*if (Minimx < Minimy)
+                    {
+
+                        ball.dx *= -1;
+                        ball.dy *= 0.4;
+                        ball.dx *= 0.4;
+                    }
+                    else
+                    {
+                        ball.dy *= -1;
+                        ball.dy *= 0.4;
+                        ball.dx *= 1;
+            }      
 
             /*if (ball.x > tower1[i][j].x and ball.x < tower1[i][j].x + tower1[i][j].width
                 and ball.y > tower1[i][j].y and ball.y < tower1[i][j].y + tower1[i][j].height)
             {
+                    }*/
+                    tower1[i][j].active = false;
+                }                     
                 if (tower1[i][j].active)
                 {
                     ball.dx *= -1;
@@ -440,7 +454,7 @@ void ProcessRoom()
                     ball.dx *= 0.4;
                     tower1[i][j].active = false;                      
                 }
-            }*/
+            }
         }
     }
 
@@ -453,30 +467,28 @@ void ProcessRoom()
             {
                 if (tower0[i][j].active)
                 {
-                    float Left = abs( - (ball_enemy.x + ball_enemy.rad) + tower0[i][j].x);
-                    float Right = abs((ball_enemy.x + ball_enemy.rad) - (tower0[i][j].x + tower0[i][j].width));
-                    float Up = abs( - (ball_enemy.y + ball_enemy.rad) + tower0[i][j].y);
-                    float Down = abs((ball_enemy.y + ball_enemy.rad) - (tower0[i][j].y + tower0[i][j].height));
-                    float Minimx = min(Left, Right);
-                    float Minimy = min(Up, Down);
+                    /*float Left = abs((ball_enemy.x + ball_enemy.rad) - tower0[i][j].x);*/
+                    float Right = abs((ball_enemy.x/* + ball_enemy.rad*/) - (tower0[i][j].x + tower0[i][j].width));
+                    float Up = abs((ball_enemy.y /*+ ball_enemy.rad*/) - tower0[i][j].y);
+                    /*float Down = abs((ball_enemy.y + ball_enemy.rad) - (tower0[i][j].y + tower0[i][j].height));*/
+                    /*float Minimx = min(Left, Right);
+                    float Minimy = min(Up, Down);*/
 
-                    if (Minimx < Minimy)
+                    if (Right < Up)
                     {
 
-                        ball_enemy.dx *= 1;
-                        ball_enemy.dy *= -1;
-                        ball_enemy.dx *= 0.4;
-                        ball_enemy.dy *= 0.4;
-                        tower0[i][j].active = false;
+                        ball_enemy.dx *= -1;
+                        ball_enemy.dy *= 0.6;
+                        ball_enemy.dx *= 0.6;
                     }
                     else
                     {
-                        ball_enemy.dx *= -1;
-                        ball_enemy.dy *= 1;
-                        ball_enemy.dx *= 0.4;
-                        ball_enemy.dy *= 0.4;
-                        tower0[i][j].active = false;
+                        ball_enemy.dy *= -1;
+                        ball_enemy.dy *= 0.6;
+                        ball_enemy.dx *= 0.6;
                     }
+                    tower0[i][j].active = false;
+                 
                 }
             }
             
