@@ -398,7 +398,7 @@ void CheckWalls()
         ball_enemy.dy = -(rand() % 15 / 100. + 0.62);
         /*for (int i = 0; i < tower_size_x; i++)
         {
-            for (int j = 0; j < tower_size_y; j++)
+            for (int j = 0; j < tower_size_y; j++)f
             {
                 if (tower0[i][j].active)
                 {
@@ -422,68 +422,53 @@ void ProcessRoom()
 {
     CheckWalls();
    
+    bool col = false;
+
     for (int i = 0; i < tower_size_x; i++)
     {
         for (int j = 0; j < tower_size_y; j++)
         {
             
-            if (!(ball.x + ball.rad >= tower1[i][j].x + tower1[i][j].width or ball.x + ball.rad <= tower1[i][j].x)
-            and !(ball.y + ball.rad >= tower1[i][j].y + tower1[i][j].height or ball.y + ball.rad <= tower1[i][j].y))
+            if (ball.x >= tower1[i][j].x && ball.x <= tower1[i][j].x + tower1[i][j].width &&
+                ball.y >= tower1[i][j].y && ball.y <= tower1[i][j].y + tower1[i][j].height)
             {
                 
-                if (tower1[i][j].active )
+                if ( tower1[i][j].active && !col)
                 {
-                    float Left = abs((ball.x + ball.rad) - tower1[i][j].x);
-                    /*float Right = abs((ball.x + ball.rad) - (tower1[i][j].x + tower1[i][j].width));*/
-                    float Up = abs((ball.y + ball.rad) - tower1[i][j].y);
-                    /*float Down = abs((ball.y + ball.rad) - (tower1[i][j].y + tower1[i][j].height));*/
-                    /*float Minimx = min(Left, Right);*/
-                    /*float Minimy = min(Up, Down);*/
-                    if (Left < Up)
+                    float Left = abs((ball.x ) - tower1[i][j].x);
+                    float Right = abs((ball.x ) - (tower1[i][j].x + tower1[i][j].width));
+                    float Up = abs((ball.y ) - tower1[i][j].y);
+                    float Down = abs((ball.y) - (tower1[i][j].y + tower1[i][j].height));
+                    float Minimx = min(Left, Right);
+                    float Minimy = min(Up, Down);
+                    if (Minimx < Minimy)
                     {
 
                         ball.dx *= -1;
-                        ball.dy *= 0.6;
-                        ball.dx *= 0.6;
+                        
                     }
                     else
                     {
                         ball.dy *= -1;
-                        ball.dy *= 0.6;
-                        ball.dx *= 0.6;
+                        
                     }
 
-
-                    /*if (Minimx < Minimy)
-                    {
-
-                        ball.dx *= -1;
-                        ball.dy *= 0.4;
-                        ball.dx *= 0.4;
-                    }
-                    else
-                    {
-                        ball.dy *= -1;
-                        ball.dy *= 0.4;
-                        ball.dx *= 1;
-            }      
-
-            /*if (ball.x > tower1[i][j].x and ball.x < tower1[i][j].x + tower1[i][j].width
-                and ball.y > tower1[i][j].y and ball.y < tower1[i][j].y + tower1[i][j].height)
-            {
-                    }*/
+                    col = true;
                     tower1[i][j].active = false;
+                    break;
                 }                     
-                if (tower1[i][j].active)
+               /* if (tower1[i][j].active)
                 {
                     ball.dx *= -1;
                     ball.dy *= 1;
                     ball.dx *= 0.4;
                     tower1[i][j].active = false;                      
-                }
+                }*/
             }
         }
     }
+
+  
 
     for (int i = 0; i < tower_size_x; i++)
     {
@@ -514,6 +499,8 @@ void ProcessRoom()
                         ball_enemy.dy *= 0.6;
                         ball_enemy.dx *= 0.6;
                     }
+
+                     col = true;
                     tower0[i][j].active = false;
                  
                 }
@@ -627,7 +614,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         ShowRacketAndBall();//рисуем фон, ракетку и шарик
         ShowScore();//рисуем очки и жизни
         BitBlt(window.device_context, 0, 0, window.width, window.height, window.context, 0, 0, SRCCOPY);//копируем буфер в окно
-        Sleep(16);//ждем 16 милисекунд (1/количество кадров в секунду)
+        Sleep(150);//ждем 16 милисекунд (1/количество кадров в секунду)
 
 
         ProcessInput();//опрос клавиатуры
