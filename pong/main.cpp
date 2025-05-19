@@ -4,15 +4,17 @@
 
 #include "windows.h"
 #include <cmath>
-
+#include <string>
 #include <math.h>
 // секция данных игры  
-typedef struct {
+ struct sprite{
     float x, y, width, height, rad, dx, dy, speed;
     HBITMAP hBitmap;//хэндл к спрайту шарика 
     bool active;
     int fall_steps;
-} sprite;
+    int attack = 1000;
+};
+
 const int tower_size_x = 3, tower_size_y = 5;
 sprite tower0[tower_size_x][tower_size_y];
 sprite tower1[tower_size_x][tower_size_y];
@@ -22,7 +24,9 @@ sprite ball;//шарик
 sprite ball_enemy; //шарик противника
 POINT mouse_cords;
 
+
 struct {
+    int cur_loc = 0;
     int score, balls;//количество набранных очков и оставшихся "жизней"
     bool action = false;//состояние - ожидание (игрок должен нажать пробел) или игра
 } game;
@@ -33,6 +37,14 @@ struct {
     int width, height;//сюда сохраним размеры окна которое создаст программа
 } window;
 
+struct location_ {
+    HBITMAP h_back;
+    int target;
+    std::string name;
+};
+
+
+location_ loc[3];
 
 HBITMAP hBack;// хэндл для фонового изображения
 HBITMAP hBrick;
@@ -83,11 +95,18 @@ void InitGame()
     ball_enemy.hBitmap = (HBITMAP)LoadImageA(NULL, "ball.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     hBrick = racket.hBitmap;
 
-
+    
     //------------------------------------------------------
     InitTower1();
     InitTower0();
     //105
+
+
+    loc[0].name = "Lv0";
+    loc[0].h_back = (HBITMAP)LoadImageA(NULL, "back.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    loc[1].name = "Lv1";
+    loc[1].h_back = (HBITMAP)LoadImageA(NULL, "background_1.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
     racket.width = 200; /*200*/
     racket.height = 300; /*300*/
     racket.speed = 10;//скорость перемещения ракетки
@@ -107,6 +126,12 @@ void InitGame()
     ball.y = racket.y - ball.rad;//шарик лежит сверху ракетки
     ball_enemy.x = enemy.x;
     ball_enemy.speed = 38 * wind;
+    
+    /*if (game.cur_loc == 1) {
+        ball.speed *= 1.1;
+        ;
+
+    }*/
     ball_enemy.y = enemy.y;
     ball_enemy.dx = -(rand() % 10 / 100. + 0.48);
     ball_enemy.dy = -(rand() % 15 / 100. + 0.62);
@@ -170,6 +195,8 @@ void ShowScore()
     if (b)
     {
         MessageBoxA(window.hWnd, "You Win", "", MB_OK);
+        game.cur_loc = 1;
+        enemy.attack = 100;
         ProcessSound("bounce.wav");
         InitGame();
     }
@@ -214,7 +241,7 @@ void ProcessInput()
     {
         t = timeGetTime();
     }
-    if (t - enemyAttackTime > 1000)
+    if (t - enemyAttackTime > enemy.attack)
         ball_enemy.active = true;
 }
 void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool alpha = false)
@@ -247,7 +274,7 @@ void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall, bool
 
 void ShowRacketAndBall()
 {
-    ShowBitmap(window.context, 0, 0, window.width, window.height, hBack);//задний фон
+    ShowBitmap(window.context, 0, 0, window.width, window.height, loc[game.cur_loc].h_back);//задний фон
     for (int i = 0; i < tower_size_x; i++)
     {
         for (int j = 0; j < tower_size_y; j++)
