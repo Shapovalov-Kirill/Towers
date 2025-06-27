@@ -50,22 +50,7 @@ HBITMAP hBack;// хэндл для фонового изображения
 HBITMAP hBrick;
 
 //cекция кода
-void InitTower1() {
-    for (int i = 0; i < tower_size_x; i++) 
-    {
-        for (int j = 0; j < tower_size_y; j++)
-        {
-            tower1[i][j].hBitmap = hBrick;
-            tower1[i][j].width = window.width / 50;
-            tower1[i][j].height = window.width / 20;
-            tower1[i][j].x = tower1[i][j].width  * i + window.width / 5 * 4;
-            tower1[i][j].y = tower1[i][j].height * j + window.height - tower1[i][j].height * tower_size_y;
-            tower1[i][j].active = true;
-            tower1[i][j].fall_steps = 0;
-        }
-    }
 
-}
 void InitTower0() {
     for (int i = 0; i < tower_size_x; i++)
     {
@@ -82,6 +67,24 @@ void InitTower0() {
     }
 
 }
+
+void InitTower1() {
+    for (int i = 0; i < tower_size_x; i++) 
+    {
+        for (int j = 0; j < tower_size_y; j++)
+        {
+            tower1[i][j].hBitmap = hBrick;
+            tower1[i][j].width = window.width / 50;
+            tower1[i][j].height = window.width / 20;
+            tower1[i][j].x = tower1[i][j].width  * i + window.width / 5 * 4;
+            tower1[i][j].y = tower1[i][j].height * j + window.height - tower1[i][j].height * tower_size_y;
+            tower1[i][j].active = true;
+            tower1[i][j].fall_steps = 0;
+        }
+    }
+
+}
+
 
 void InitGame()
 {
@@ -113,7 +116,7 @@ void InitGame()
     racket.x = window.width / 5 + racket.width;//ракетка посередине окна
     racket.y = window.height - racket.height;//чуть выше низа экрана - на высоту ракетки
 
-    enemy.x = window.width / 5 * 4;//х координату оппонета ставим в ту же точку что и игрока
+    enemy.x = window.width / 5 * 4;
     enemy.y = window.height - racket.height;
     enemy.width = 105;
     enemy.height = 300;
@@ -424,7 +427,7 @@ void CheckWalls()
 }
 
 
-// Сделать проверку коллизии на несколько попаданий через нахождение времени после попадания
+
 void BlockFall(sprite tower1[][5])
 {
     for (int i = 0; i < tower_size_x; i++)
@@ -455,10 +458,9 @@ void BlockFall(sprite tower1[][5])
         }
     }
 }
-void ProcessRoom()
+
+void Collision(sprite tower[][5], sprite ball)
 {
-    CheckWalls();
-   
     bool col = false;
 
     float ddx = ball.dx * ball.speed;
@@ -483,16 +485,16 @@ void ProcessRoom()
                 for (int j = 0; j < tower_size_y; j++)
                 {
 
-                    if (ball.x >= tower1[i][j].x && ball.x <= tower1[i][j].x + tower1[i][j].width &&
-                        ball.y >= tower1[i][j].y && ball.y <= tower1[i][j].y + tower1[i][j].height)
+                    if (ball.x >= tower[i][j].x && ball.x <= tower[i][j].x + tower[i][j].width &&
+                        ball.y >= tower[i][j].y && ball.y <= tower[i][j].y + tower[i][j].height)
                     {
 
-                        if (tower1[i][j].active && !col)
+                        if (tower[i][j].active && !col)
                         {
-                            float Left = abs((ball.x) - tower1[i][j].x);
-                            float Right = abs((ball.x) - (tower1[i][j].x + tower1[i][j].width));
-                            float Up = abs((ball.y) - tower1[i][j].y);
-                            float Down = abs((ball.y) - (tower1[i][j].y + tower1[i][j].height));
+                            float Left = abs((ball.x + ball.rad) - tower[i][j].x);
+                            float Right = abs((ball.x + ball.rad) - (tower[i][j].x + tower[i][j].width));
+                            float Up = abs((ball.y + ball.rad) - tower[i][j].y);
+                            float Down = abs((ball.y + ball.rad) - (tower[i][j].y + tower[i][j].height));
                             float Minimx = min(Left, Right);
                             float Minimy = min(Up, Down);
                             if (Minimx < Minimy)
@@ -507,76 +509,9 @@ void ProcessRoom()
 
                             }
 
-                            col = true;
+                           
                             tower1[i][j].active = false;
 
-                            i = tower_size_x;
-                            j = tower_size_y;
-                        }
-                        /* if (tower1[i][j].active)
-                         {
-                             ball.dx *= -1;
-                             ball.dy *= 1;
-                             ball.dx *= 0.4;
-                             tower1[i][j].active = false;
-                         }*/
-                    }
-                }
-            }
-
-        }
-    }
-    float ddx_e = ball_enemy.dx * ball.speed;
-    float ddy_e = ball_enemy.dy * ball.speed;
-    float l_e = sqrt(ddx_e * ddx_e + ddy_e * ddy_e);
-
-   
-    if (ball_enemy.active)
-    {
-        for (float p = 0; p < l; p += 1)
-        {
-            ddx_e = ball_enemy.dx * ball.speed;
-            ddy_e = ball_enemy.dy * ball.speed;
-
-            float tddx_e = ddx_e / l_e;
-            float tddy_e = ddy_e / l_e;
-
-            ball_enemy.x += tddx_e;
-            ball_enemy.y += tddy_e;
-
-            for (int i = 0; i < tower_size_x; i++)
-            {
-                for (int j = 0; j < tower_size_y; j++)
-                {
-                    if (ball_enemy.x > tower0[i][j].x and ball_enemy.x < tower0[i][j].x + tower0[i][j].width
-                        and ball_enemy.y > tower0[i][j].y and ball_enemy.y < tower0[i][j].y + tower0[i][j].height)
-                    {
-                        if (tower0[i][j].active)
-                        {
-                            /*float Left = abs((ball_enemy.x + ball_enemy.rad) - tower0[i][j].x);*/
-                            float Right = abs((ball_enemy.x/* + ball_enemy.rad*/) - (tower0[i][j].x + tower0[i][j].width));
-                            float Up = abs((ball_enemy.y /*+ ball_enemy.rad*/) - tower0[i][j].y);
-                            /*float Down = abs((ball_enemy.y + ball_enemy.rad) - (tower0[i][j].y + tower0[i][j].height));*/
-                            /*float Minimx = min(Left, Right);
-                            float Minimy = min(Up, Down);*/
-
-                            if (Right < Up)
-                            {
-
-                                ball_enemy.dx *= -1;
-                                ball_enemy.dy *= 0.6;
-                                ball_enemy.dx *= 0.6;
-                            }
-                            else
-                            {
-                                ball_enemy.dy *= -1;
-                                ball_enemy.dy *= 0.6;
-                                ball_enemy.dx *= 0.6;
-                            }
-
-                            col = true;
-                            tower0[i][j].active = false;
-
                         }
                     }
 
@@ -584,10 +519,88 @@ void ProcessRoom()
             }
         }
     }
+}
+
+void ProcessRoom()
+{
+    CheckWalls();
+    Collision(tower1, ball);
+    Collision(tower0, ball_enemy);
     BlockFall(tower0);
     BlockFall(tower1);
 
-    
+    /* i = tower_size_x;
+     j = tower_size_y;*/
+
+     /* if (tower1[i][j].active)
+      {
+          ball.dx *= -1;
+          ball.dy *= 1;
+          ball.dx *= 0.4;
+          tower1[i][j].active = false;
+      }*/
+
+      /*float ddx_e = ball_enemy.dx * ball.speed;
+      float ddy_e = ball_enemy.dy * ball.speed;
+      float l_e = sqrt(ddx_e * ddx_e + ddy_e * ddy_e);
+
+
+      if (ball_enemy.active)
+      {
+          for (float p = 0; p < l_e; p += 1)
+          {
+              ddx_e = ball_enemy.dx * ball.speed;
+              ddy_e = ball_enemy.dy * ball.speed;
+
+              float tddx_e = ddx_e / l_e;
+              float tddy_e = ddy_e / l_e;
+
+              ball_enemy.x += tddx_e;
+              ball_enemy.y += tddy_e;
+
+              for (int i = 0; i < tower_size_x; i++)
+              {
+                  for (int j = 0; j < tower_size_y; j++)
+                  {
+                      if (ball_enemy.x > tower0[i][j].x and ball_enemy.x < tower0[i][j].x + tower0[i][j].width
+                          and ball_enemy.y > tower0[i][j].y and ball_enemy.y < tower0[i][j].y + tower0[i][j].height)
+                      {
+                          if (tower0[i][j].active)
+                          {
+                              float Left = abs((ball_enemy.x + ball_enemy.rad) - tower0[i][j].x);
+                              float Right = abs((ball_enemy.x + ball_enemy.rad) - (tower0[i][j].x + tower0[i][j].width));
+                              float Up = abs((ball_enemy.y + ball_enemy.rad) - tower0[i][j].y);
+                              float Down = abs((ball_enemy.y + ball_enemy.rad) - (tower0[i][j].y + tower0[i][j].height));
+                              float Minimx = min(Left, Right);
+                              float Minimy = min(Up, Down);
+
+                              if (Right < Up)
+                              {
+
+                                  ball_enemy.dx *= -1;
+                                  ball_enemy.dy *= 0.6;
+                                  ball_enemy.dx *= 0.6;
+                              }
+                              else
+                              {
+                                  ball_enemy.dy *= -1;
+                                  ball_enemy.dy *= 0.6;
+                                  ball_enemy.dx *= 0.6;
+                              }
+
+
+                              tower0[i][j].active = false;
+
+                          }
+                      }
+
+                  }
+              }
+          }
+      }*/
+
+
+   
 } 
 
 
