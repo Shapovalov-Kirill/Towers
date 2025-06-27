@@ -18,10 +18,10 @@
 const int tower_size_x = 3, tower_size_y = 5;
 sprite tower0[tower_size_x][tower_size_y];
 sprite tower1[tower_size_x][tower_size_y];
-sprite racket;//ракетка игрока
-sprite enemy;//ракетка противника
-sprite ball;//шарик
-sprite ball_enemy; //шарик противника
+sprite tower;//башня игрока
+sprite enemy;//башня противника
+sprite ball;
+sprite ball_enemy; 
 POINT mouse_cords;
 
 
@@ -92,11 +92,11 @@ void InitGame()
     //пути относительные - файлы должны лежать рядом с .exe 
     //результат работы LoadImageA сохраняет в хэндлах битмапов, рисование спрайтов будет произовдиться с помощью этих хэндлов
     ball.hBitmap = (HBITMAP)LoadImageA(NULL, "ball.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-    racket.hBitmap = (HBITMAP)LoadImageA(NULL, "racket.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    tower.hBitmap = (HBITMAP)LoadImageA(NULL, "racket.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     enemy.hBitmap = (HBITMAP)LoadImageA(NULL, "racket_enemy.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     hBack = (HBITMAP)LoadImageA(NULL, "back.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     ball_enemy.hBitmap = (HBITMAP)LoadImageA(NULL, "ball.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-    hBrick = racket.hBitmap;
+    hBrick = tower.hBitmap;
 
     
     //------------------------------------------------------
@@ -110,38 +110,30 @@ void InitGame()
     loc[1].name = "Lv1";
     loc[1].h_back = (HBITMAP)LoadImageA(NULL, "background_1.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
-    racket.width = 200; /*200*/
-    racket.height = 300; /*300*/
-    racket.speed = 10;//скорость перемещения ракетки
-    racket.x = window.width / 5 + racket.width;//ракетка посередине окна
-    racket.y = window.height - racket.height;//чуть выше низа экрана - на высоту ракетки
+    tower.width = 200; /*200*/
+    tower.height = 300; /*300*/
+    tower.x = window.width / 5 + tower.width;
+    tower.y = window.height - tower.height;
 
     enemy.x = window.width / 5 * 4;
-    enemy.y = window.height - racket.height;
+    enemy.y = window.height - tower.height;
     enemy.width = 105;
     enemy.height = 300;
-    ball.dy = (rand() % 65 + 35) / 100.;//формируем вектор полета шарика
-    ball.dx = -(1 - ball.dy);//формируем вектор полета шарика
+
     float wind = window.width / 1920.;
+
     ball.speed = 38 * wind;
     ball.rad = 20;
-    ball.x = racket.x;//x координата шарика - на середие ракетки
-    ball.y = racket.y - ball.rad;//шарик лежит сверху ракетки
+    ball.x = tower.x;
+    ball.y = tower.y - ball.rad;
     ball_enemy.x = enemy.x;
     ball_enemy.speed = 38 * wind;
-    
-    /*if (game.cur_loc == 1) {
-        ball.speed *= 1.1;
-        ;
-
-    }*/
     ball_enemy.y = enemy.y;
-    ball_enemy.dx = -(rand() % 10 / 100. + 0.28);
-    ball_enemy.dy = -(rand() % 15 / 100. + 0.28);
+    ball_enemy.dx = -(rand() % 10 / 100. + 0.46);
+    ball_enemy.dy = -(rand() % 15 / 100. + 0.55);
+
     game.score = 0;
     game.balls = 100;
-
-    
 
     // ширина блока - 51 wight
     // высота блока - 128 height
@@ -149,7 +141,7 @@ void InitGame()
 
 void ProcessSound(const char* name)//проигрывание аудиофайла в формате .wav, файл должен лежать в той же папке где и программа
 {
-   // PlaySound(TEXT(name), NULL, SND_FILENAME | SND_ASYNC);//переменная name содержит имя файла. флаг ASYNC позволяет проигрывать звук паралельно с исполнением программы
+   //PlaySound(TEXT(name), NULL, SND_FILENAME | SND_ASYNC);//переменная name содержит имя файла. флаг ASYNC позволяет проигрывать звук паралельно с исполнением программы
 }
 
 void ShowScore()
@@ -168,6 +160,7 @@ void ShowScore()
     _itoa_s(game.balls, txt, 10);
     TextOutA(window.context, 10, 100, "Balls", 5);
     TextOutA(window.context, 200, 100, (LPCSTR)txt, strlen(txt));
+
     bool a = true, b = true;
     for (int i = 0; i < tower_size_x; i++)
     {
@@ -182,7 +175,7 @@ void ShowScore()
     if (a)
     {
         MessageBoxA(window.hWnd, "You Lose", "", MB_OK);
-        ProcessSound("fail.wav"); 
+        //ProcessSound("fail.wav"); 
         InitGame();
     }
     for (int i = 0; i < tower_size_x; i++)
@@ -219,16 +212,12 @@ void ProcessInput()
         //p.x and p.y are now relative to hwnd's client area
     }
 
-    /*
-    if (GetAsyncKeyState(VK_LEFT)) racket.x -= racket.speed;
-    if (GetAsyncKeyState(VK_RIGHT)) racket.x += racket.speed;
-    */
+   
     if (!game.action && GetAsyncKeyState(VK_LBUTTON))
     {
         game.action = true;
-        ProcessSound("bounce.wav");
-        ball.x = racket.x;//x координата шарика - на середие ракетки
-        ball.y = racket.y - ball.rad;//шарик лежит сверху ракетки
+        ball.x = tower.x;//x координата шарика - на середие ракетки
+        ball.y = tower.y - ball.rad;//шарик лежит сверху ракетки
         ball.dx = mouse_cords.x - ball.x;
         ball.dy = mouse_cords.y - ball.y;
         float len = sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
@@ -315,67 +304,6 @@ void ShowRacketAndBall()
     ShowBitmap(window.context, ball_enemy.x - ball.rad, ball_enemy.y - ball.rad, 2 * ball.rad, 2 * ball.rad, ball.hBitmap, true);
 }
 
-//void CheckWalls()
-//{
-//    if (ball.x < ball.rad || ball.x > window.width - ball.rad)
-//    {
-//        ball.dx *= -1;
-//        ProcessSound("bounce.wav");
-//    }
-//}
-
-void CheckRoof()
-{
-    if (ball.y < ball.rad + racket.height)
-    {
-        ball.dy *= -1;
-        ProcessSound("bounce.wav");
-    }
-}
-
-bool tail = false;
-
-void CheckFloor()
-{
-    if (ball.y > window.height - ball.rad - racket.height)//шарик пересек линию отскока - горизонталь ракетки
-    {
-        if (!tail && ball.x >= racket.x - racket.width / 2. - ball.rad && ball.x <= racket.x + racket.width / 2. + ball.rad)//шарик отбит, и мы не в режиме обработки хвоста
-        {
-            game.score++;//за каждое отбитие даем одно очко
-            ball.speed += 5. / game.score;//но увеличиваем сложность - прибавляем скорости шарику
-            ball.dy *= -1;//отскок
-            racket.width -= 10. / game.score;//дополнительно уменьшаем ширину ракетки - для сложности
-            ProcessSound("bounce.wav");//играем звук отскока
-        }
-        else
-        {//шарик не отбит
-
-            tail = true;//дадим шарику упасть ниже ракетки
-
-            if (ball.y - ball.rad > window.height)//если шарик ушел за пределы окна
-            {
-                game.balls--;//уменьшаем количество "жизней"
-
-                ProcessSound("fail.wav");//играем звук
-
-                if (game.balls < 0) { //проверка условия окончания "жизней"
-
-                    MessageBoxA(window.hWnd, "game over", "", MB_OK);//выводим сообщение о проигрыше
-                    InitGame();//переинициализируем игру
-                }
-
-                ball.dy = (rand() % 65 + 35) / 100.;//задаем новый случайный вектор для шарика
-                ball.dx = -(1 - ball.dy);
-                ball.x = racket.x;//инициализируем координаты шарика - ставим его на ракетку
-                ball.y = racket.y - ball.rad;
-                game.action = false;//приостанавливаем игру, пока игрок не нажмет пробел
-                tail = false;
-            }
-        }
-    }
-}
-
-
 void CheckWalls()
 {
     if (ball.x < 0 || ball.x > window.width || ball.y > window.height)
@@ -388,9 +316,8 @@ void CheckWalls()
             MessageBoxA(window.hWnd, "game over", "", MB_OK);//выводим сообщение о проигрыше
             InitGame();//переинициализируем игру
         }
-        game.action = false;//приостанавливаем игру, пока игрок не нажмет пробел
-        ball.x = racket.x;//инициализируем координаты шарика - ставим его на ракетку
-        ball.y = racket.y - ball.rad;
+        game.action = false;
+        ball.y = tower.y - ball.rad;
         
     }
     if (ball_enemy.x < 0 || ball_enemy.x > window.width || ball_enemy.y > window.height)
@@ -404,29 +331,10 @@ void CheckWalls()
         ball_enemy.x = enemy.x;
         ball_enemy.y = enemy.y;
         
-        ball_enemy.dx = -(rand() % 10 / 100. + 0.28);
-        ball_enemy.dy = -(rand() % 15 / 100. + 0.28);
-
-        /*for (int i = 0; i < tower_size_x; i++)
-        {
-            for (int j = 0; j < tower_size_y; j++)f
-            {
-                if (tower0[i][j].active)
-                {
-                    ball_enemy.dx = tower0[i][j].x - ball_enemy.x + 5;
-                    ball_enemy.dy = -tower0[i][j].y + 30;
-                    float len = sqrt(ball_enemy.dx * ball_enemy.dx + ball_enemy.dy * ball_enemy.dy);
-                    ball_enemy.dx = ball_enemy.dx / len;
-                    ball_enemy.dy = ball_enemy.dy / len;
-                }
-                    
-            }
-
-        }*/
+        ball_enemy.dx = -(rand() % 10 / 100. + 0.46);
+        ball_enemy.dy = -(rand() % 15 / 100. + 0.55);
     }
 }
-
-
 
 void BlockFall(sprite tower1[][5])
 {
@@ -446,6 +354,7 @@ void BlockFall(sprite tower1[][5])
                 }
                 else
                 {
+                
                     float d = 1;
                     for (int k = j; k >= 0; k--)
                     {
@@ -459,7 +368,7 @@ void BlockFall(sprite tower1[][5])
     }
 }
 
-void Collision(sprite tower[][5], sprite ball)
+void Collision(sprite tower[][5], sprite& ball)
 {
     bool col = false;
 
@@ -467,7 +376,7 @@ void Collision(sprite tower[][5], sprite ball)
     float ddy = ball.dy * ball.speed;
     float l = sqrt(ddx * ddx + ddy * ddy);
 
-    if (game.action)
+    //if (game.action)
     {
         for (float p = 0; p < l; p += 1)
         {
@@ -491,10 +400,10 @@ void Collision(sprite tower[][5], sprite ball)
 
                         if (tower[i][j].active && !col)
                         {
-                            float Left = abs((ball.x + ball.rad) - tower[i][j].x);
-                            float Right = abs((ball.x + ball.rad) - (tower[i][j].x + tower[i][j].width));
-                            float Up = abs((ball.y + ball.rad) - tower[i][j].y);
-                            float Down = abs((ball.y + ball.rad) - (tower[i][j].y + tower[i][j].height));
+                            float Left = abs((ball.x ) - tower[i][j].x);
+                            float Right = abs((ball.x ) - (tower[i][j].x + tower[i][j].width));
+                            float Up = abs((ball.y ) - tower[i][j].y);
+                            float Down = abs((ball.y ) - (tower[i][j].y + tower[i][j].height));
                             float Minimx = min(Left, Right);
                             float Minimy = min(Up, Down);
                             if (Minimx < Minimy)
@@ -509,8 +418,9 @@ void Collision(sprite tower[][5], sprite ball)
 
                             }
 
-                           
-                            tower1[i][j].active = false;
+                            ball.dx *= 0.4;
+                            ball.dy *= 0.4;
+                            tower[i][j].active = false;
 
                         }
                     }
@@ -524,83 +434,10 @@ void Collision(sprite tower[][5], sprite ball)
 void ProcessRoom()
 {
     CheckWalls();
-    Collision(tower1, ball);
-    Collision(tower0, ball_enemy);
+    if (ball_enemy.active) Collision(tower0, ball_enemy);
+    if (game.action) Collision(tower1, ball); 
     BlockFall(tower0);
     BlockFall(tower1);
-
-    /* i = tower_size_x;
-     j = tower_size_y;*/
-
-     /* if (tower1[i][j].active)
-      {
-          ball.dx *= -1;
-          ball.dy *= 1;
-          ball.dx *= 0.4;
-          tower1[i][j].active = false;
-      }*/
-
-      /*float ddx_e = ball_enemy.dx * ball.speed;
-      float ddy_e = ball_enemy.dy * ball.speed;
-      float l_e = sqrt(ddx_e * ddx_e + ddy_e * ddy_e);
-
-
-      if (ball_enemy.active)
-      {
-          for (float p = 0; p < l_e; p += 1)
-          {
-              ddx_e = ball_enemy.dx * ball.speed;
-              ddy_e = ball_enemy.dy * ball.speed;
-
-              float tddx_e = ddx_e / l_e;
-              float tddy_e = ddy_e / l_e;
-
-              ball_enemy.x += tddx_e;
-              ball_enemy.y += tddy_e;
-
-              for (int i = 0; i < tower_size_x; i++)
-              {
-                  for (int j = 0; j < tower_size_y; j++)
-                  {
-                      if (ball_enemy.x > tower0[i][j].x and ball_enemy.x < tower0[i][j].x + tower0[i][j].width
-                          and ball_enemy.y > tower0[i][j].y and ball_enemy.y < tower0[i][j].y + tower0[i][j].height)
-                      {
-                          if (tower0[i][j].active)
-                          {
-                              float Left = abs((ball_enemy.x + ball_enemy.rad) - tower0[i][j].x);
-                              float Right = abs((ball_enemy.x + ball_enemy.rad) - (tower0[i][j].x + tower0[i][j].width));
-                              float Up = abs((ball_enemy.y + ball_enemy.rad) - tower0[i][j].y);
-                              float Down = abs((ball_enemy.y + ball_enemy.rad) - (tower0[i][j].y + tower0[i][j].height));
-                              float Minimx = min(Left, Right);
-                              float Minimy = min(Up, Down);
-
-                              if (Right < Up)
-                              {
-
-                                  ball_enemy.dx *= -1;
-                                  ball_enemy.dy *= 0.6;
-                                  ball_enemy.dx *= 0.6;
-                              }
-                              else
-                              {
-                                  ball_enemy.dy *= -1;
-                                  ball_enemy.dy *= 0.6;
-                                  ball_enemy.dx *= 0.6;
-                              }
-
-
-                              tower0[i][j].active = false;
-
-                          }
-                      }
-
-                  }
-              }
-          }
-      }*/
-
-
-   
 } 
 
 
@@ -609,8 +446,8 @@ void ProcessBall()
     if (game.action)
     {
         //если игра в активном режиме - перемещаем шарик
-       // ball.x += ball.dx * ball.speed;
-       // ball.y += ball.dy * ball.speed;
+      //  ball.x += ball.dx * ball.speed;
+      //  ball.y += ball.dy * ball.speed;
         ball.dy += 0.025;
         ball.dx *= 0.999;
         ball.dy *= 0.999;
@@ -618,13 +455,13 @@ void ProcessBall()
     else
     {
         //иначе - шарик "приклеен" к ракетке
-        ball.x = racket.x;
+        ball.x = tower.x;
     }
 
     if (ball_enemy.active)
     {
-        ball_enemy.x += ball_enemy.dx * ball_enemy.speed;
-        ball_enemy.y += ball_enemy.dy * ball_enemy.speed;
+       // ball_enemy.x += ball_enemy.dx * ball_enemy.speed;
+      //  ball_enemy.y += ball_enemy.dy * ball_enemy.speed;
         ball_enemy.dy += 0.025;
         ball_enemy.dx *= 0.999;
         ball_enemy.dy *= 0.999;
@@ -662,15 +499,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     while (!GetAsyncKeyState(VK_ESCAPE))
     {
         ShowRacketAndBall();//рисуем фон, ракетку и шарик
-        ShowScore();//рисуем очки и жизни
+        ShowScore();
         BitBlt(window.device_context, 0, 0, window.width, window.height, window.context, 0, 0, SRCCOPY);//копируем буфер в окно
         Sleep(15);//ждем 16 милисекунд (1/количество кадров в секунду)
 
 
         ProcessInput();//опрос клавиатуры
         ProcessRoom();//обрабатываем отскоки от стен и каретки, попадание шарика в картетку
-        ProcessBall();//перемещаем шарик
-        
+        ProcessBall();//перемещаем шарик 
     }
-
 }
