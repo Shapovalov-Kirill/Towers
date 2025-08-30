@@ -25,7 +25,7 @@ sprite ball_enemy;
 POINT mouse_cords;
 
 
-struct {
+struct  {
     int cur_loc = 0;
     int score, balls;//количество набранных очков и оставшихся "жизней"
     bool action = false;//состояние - ожидание (игрок должен нажать пробел) или игра
@@ -109,7 +109,8 @@ void InitGame()
     loc[0].h_back = (HBITMAP)LoadImageA(NULL, "back.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     loc[1].name = "Lv1";
     loc[1].h_back = (HBITMAP)LoadImageA(NULL, "background_1.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-
+    loc[2].name = "Lv2";
+    loc[2].h_back = (HBITMAP)LoadImageA(NULL, "back.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
     tower.width = 200; /*200*/
     tower.height = 300; /*300*/
     tower.x = window.width / 5 + tower.width;
@@ -191,7 +192,7 @@ void ShowScore()
     if (b)
     {
         MessageBoxA(window.hWnd, "You Win", "", MB_OK);
-        game.cur_loc = 1;
+        game.cur_loc++;
         enemy.attack = 100;
         ProcessSound("bounce.wav");
         InitGame();
